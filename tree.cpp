@@ -14,30 +14,46 @@ std::string pwd(){
 	};
 	return pwd;
 };
+int index = 0;
 
-std::string genTree(std::string folder){
+std::string genTree(std::string folder, int deep = 0){
+	++index;
 	std::string tree;
 	
-	std::string command = "ls -F "+ folder +" > /tmp/file";
-	std::system(command.c_str());
-		
-	std::ifstream file("/tmp/file");		
-	if (file.is_open()){
+	std::string command1 = "ls -F '"+ folder +"' > /tmp/file" + std::to_string(index);
+	std::system(command1.c_str());
+
+	std::string command2 = "ls -l '"+ folder +"' | cut -c 1 | sed '1d' > /tmp/fileType" + std::to_string(index);
+	std::system(command2.c_str());
+	
+	std::ifstream file("/tmp/file" + std::to_string(index));		
+	std::ifstream fileType("/tmp/fileType" + std::to_string(index));		
+	if (file.is_open() && fileType.is_open()){
+		std::string dt = "";
+		for(int i = 0; i< deep; i++){
+			dt += " │   ";
+		}
 		int n = 256;
 		char lineC[n];
+		std::string type;
 		std::string lineS;
-		file.getline(lineC , n);
+		file.getline(lineC,n);
 		lineS = lineC;
 		while(file.getline(lineC,n)){
-			tree += " ├── "+ lineS + '\n';
+			getline(fileType , type);
+			tree += dt + " ├── "+ lineS + '\n';
+			if(type == "d"){
+				tree += genTree(folder+'/'+lineS, deep + 1)+ '\n';
+			}
 			lineS = lineC;	
 		};
-		tree += " └── ";
+		tree += dt +" └── ";
 		tree += lineS;
 		file.close();
+		fileType.close();
 	}else{
 		throw;
-	};
+	}
 	return tree; 
 };
 
